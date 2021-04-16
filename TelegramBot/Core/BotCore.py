@@ -3,19 +3,16 @@ from typing import NamedTuple
 from datetime import datetime
 import logging
 
-
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-from TelegramBot.DBase.DBase import DBase
-
+from TelegramBot import DBase
 from TelegramBot.DBase.DBase import MAXIMAL_DAYS, MAXIMAL_REC_COUNT
 
 
 STORES = ['Aliexpress']
-COMMANDS = ['start', 'add']
 
 
 class UserData(StatesGroup):
@@ -78,9 +75,10 @@ class BotCore:
 
     async def add_command(self, message: types.Message, state: FSMContext):
         await state.finish()
+        user_id, chat_id = message.from_user.username, message.chat.id
+        self.db.add_user(chat_id=chat_id)
 
-        user_id = message.from_user.id
-        rec_count = self.db.records_count(user_id)
+        rec_count = self.db.records_count(chat_id)
         if rec_count >= MAXIMAL_REC_COUNT:
             await message.answer('Ты уже отслеживаешь достаточно ссылок')
             return
@@ -132,11 +130,8 @@ class BotCore:
                              'еще что-то добавить - кликай: /add')
         data = await state.get_data()
         chat_id = message.chat.id
-        dt = datetime.now()
-
-        rec = Record(chat_id, dt, data["store"], data["link"], data["price"])
-
-        self.db.add_record(rec)
+        self.db.add_link(chat_id=chat_id, store=data['store'],
+                         link=data['link'], target_price=data['price'])
         await state.finish()
 
     def register_handlers(self, dp: Dispatcher):
@@ -147,7 +142,7 @@ class BotCore:
         dp.register_message_handler(self.link_added, state=UserData.link)
         dp.register_message_handler(self.price_added, state=UserData.price)
 
-    def starting(self):
+    def start(self):
         dp = Dispatcher(self.bot, storage=MemoryStorage())
         logging.basicConfig(level=logging.INFO)
         self.register_handlers(dp)

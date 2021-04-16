@@ -6,11 +6,6 @@ from selenium.common.exceptions import NoSuchElementException
 
 PRICE_CLASS_NAME = 'product-price-value'
 
-IS_CHECKED_STATE = 'sku-property-item selected'
-IS_NOT_CHECKED_STATE = 'sku-property-item'
-IS_DISABLED_STATE = 'sku-property-item disabled'
-SIZE_INFO = 'sku-size-info'
-
 
 def get_src_price(browser: Chrome) -> str:
     try:

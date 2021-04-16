@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from typing import NamedTuple
 
@@ -6,13 +7,8 @@ from peewee import *
 
 MAXIMAL_REC_COUNT = 5
 MAXIMAL_DAYS = 30
-
-DB_NAME = 'StoreBotDB'
-DB_HOST = '127.0.0.1'
-DB_PORT = 5432
-DB_USER = 'postgres'
-DB_PASSWORD = 'masterkey'
-
+DB_PATH = '/media/michael/Data/TEMP/example.db'
+# DB_PATH = os.path.join(os.getenv('PATH'), 'example.db')
 
 ACTIVE_STATUS = True
 DELETED_STATUS = False
@@ -34,16 +30,17 @@ class Orm(NamedTuple):
 
 class DBase:
     def __init__(self):
+        self.__path = DB_PATH
         self.__db = None
         self.__is_connect = False
         self.__orm = None
+        if not os.path.exists(DB_PATH):
+            self.create_db()
 
     @property
-    def db(self) -> PostgresqlDatabase:
+    def db(self) -> SqliteDatabase:
         if self.__db is None:
-            self.__db = PostgresqlDatabase(database=DB_NAME, host=DB_HOST,
-                                           port=DB_PORT, user=DB_USER,
-                                           password=DB_PASSWORD)
+            self.__db = SqliteDatabase(self.__path)
         return self.__db
 
     @property
@@ -67,7 +64,7 @@ class DBase:
             account_type = CharField(null=False, default='base')
 
             class Meta:
-                db_table = 'users'
+                db_table = 'Users'
 
         class Link(BaseModel):
             user = ForeignKeyField(model=User, on_delete='CASCADE')
@@ -80,13 +77,17 @@ class DBase:
             status = BooleanField(default=ACTIVE_STATUS)
 
             class Meta:
-                db_table = 'links'
+                db_table = 'Links'
 
         class ORM:
             user: User = User
             link: Link = Link
 
         return ORM()
+
+    def create_db(self):
+        tabs = [self.orm.user, self.orm.link]
+        self.db.create_tables(tabs, safe=True)
 
     def add_user(self, chat_id: int):
         t = self.orm.user
