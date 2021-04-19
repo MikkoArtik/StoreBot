@@ -4,7 +4,7 @@ from typing import NamedTuple
 from peewee import *
 
 
-MAXIMAL_REC_COUNT = 5
+MAXIMAL_REC_COUNT = 50
 MAXIMAL_DAYS = 30
 
 DB_NAME = 'StoreBotDB'

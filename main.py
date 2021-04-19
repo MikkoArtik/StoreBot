@@ -8,6 +8,6 @@ TOKEN = os.getenv('BOT_TOKEN')
 
 
 if __name__ == '__main__':
-    # ClearingThread(TOKEN).start()
-    # UserNotifyingThread(TOKEN).start()
+    ClearingThread(TOKEN).start()
+    UserNotifyingThread(TOKEN).start()
     BotCore(TOKEN).start()

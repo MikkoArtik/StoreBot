@@ -13,14 +13,14 @@ from TelegramBot import DBase
 from TelegramBot.DBase.DBase import DELETED_STATUS
 from TelegramBot.DBase.DBase import INFINITY_PRICE
 
-from TelegramBot.Parser.Aliexpress import get_price
+from TelegramBot import Parser
 
 
-PRICE_CHECKING_HOURS = [19, 18]
-DB_CLEARING_HOURS = [11]
+PRICE_CHECKING_HOURS = [11, 17]
+DB_CLEARING_HOURS = [1]
 URL_PATTERN = 'https://api.telegram.org/bot{token}/{method}'
 SEND_MESSAGE = 'sendMessage'
-MIN_PERCENT_DETECTION = 5
+MIN_PERCENT_DETECTION = 2
 
 
 def get_driver_path():
@@ -71,7 +71,8 @@ class Monitoring:
                 browser = self.browser
                 for rec in self.db.get_active_records():
                     rec_id, chat_id, store, link, target_price, last_price = rec
-                    current_price = get_price(browser, link)
+                    browser.get(link)
+                    current_price = Parser(browser, store).get_minimal_price()
                     if current_price == INFINITY_PRICE:
                         continue
 

@@ -12,7 +12,9 @@ from TelegramBot import DBase
 from TelegramBot.DBase.DBase import MAXIMAL_DAYS, MAXIMAL_REC_COUNT
 
 
-STORES = ['Aliexpress']
+ALI_STORE = 'AliExpress'
+WILDBERRIES_STORE = 'Wildberries'
+STORES = [ALI_STORE, WILDBERRIES_STORE]
 
 
 class UserData(StatesGroup):
@@ -27,6 +29,11 @@ class Record(NamedTuple):
     store: str
     link: str
     price: str
+
+
+def check_link_conformity(link: str, store: str):
+    if store.lower() in link.lower():
+        return True
 
 
 def link_message_clearing(src_text: str) -> str:
@@ -109,7 +116,7 @@ class BotCore:
         store = data['store']
 
         url = link_message_clearing(message.text)
-        if store.lower() not in url.lower():
+        if not check_link_conformity(url, store):
             await message.answer('Некорректная ссылка. Попробуй еще раз')
             return
         await state.update_data(link=url)
