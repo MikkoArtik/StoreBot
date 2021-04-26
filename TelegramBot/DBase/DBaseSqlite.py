@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from typing import NamedTuple
 
 from peewee import *
 
@@ -8,24 +7,11 @@ from peewee import *
 MAXIMAL_REC_COUNT = 5
 MAXIMAL_DAYS = 30
 DB_PATH = '/media/michael/Data/TEMP/example.db'
-# DB_PATH = os.path.join(os.getenv('PATH'), 'example.db')
 
 ACTIVE_STATUS = True
 DELETED_STATUS = False
 ACCOUNT_TYPES = ['base', 'pro']
 INFINITY_PRICE = 1e10
-
-
-class Record(NamedTuple):
-    chat_id: int
-    dt: datetime
-    store: str
-    link: str
-    price: str
-
-
-class Orm(NamedTuple):
-    info: object
 
 
 class DBase:

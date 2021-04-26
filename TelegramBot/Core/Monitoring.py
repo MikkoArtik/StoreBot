@@ -16,7 +16,7 @@ from TelegramBot.DBase.DBase import INFINITY_PRICE
 from TelegramBot import Parser
 
 
-PRICE_CHECKING_HOURS = [11, 17]
+PRICE_CHECKING_HOURS = [10, 17]
 DB_CLEARING_HOURS = [1]
 URL_PATTERN = 'https://api.telegram.org/bot{token}/{method}'
 SEND_MESSAGE = 'sendMessage'
@@ -46,7 +46,7 @@ class Monitoring:
     @property
     def browser(self) -> Chrome:
         options = ChromeOptions()
-        options.add_argument('headless')
+        # options.add_argument('headless')
         options.add_argument('window-size=1200x600')
         return Chrome(executable_path=get_driver_path(), options=options)
 
@@ -61,18 +61,22 @@ class Monitoring:
         while True:
             current_time = datetime.now().time()
             if current_time.hour in DB_CLEARING_HOURS:
+                print('Start clearing DBase...')
                 self.db.clearing_db()
-            sleep(60 * 60)
+                print('\tClearing DBase done')
+            sleep(60 * 30)
 
     def notify_sending(self):
         while True:
             current_hour = datetime.now().time().hour
             if current_hour in PRICE_CHECKING_HOURS:
+                print('Start price checking...')
                 browser = self.browser
                 for rec in self.db.get_active_records():
                     rec_id, chat_id, store, link, target_price, last_price = rec
                     browser.get(link)
                     current_price = Parser(browser, store).get_minimal_price()
+                    print(f'{link}\n{current_price}')
                     if current_price == INFINITY_PRICE:
                         continue
 
@@ -103,7 +107,8 @@ class Monitoring:
 
                     self.send_message_by_chat_id(chat_id, message)
                 browser.close()
-            sleep(60 * 60)
+                print('\tPrice checking done')
+            sleep(60 * 30)
 
 
 class ClearingThread(Thread):

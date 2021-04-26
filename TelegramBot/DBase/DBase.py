@@ -1,11 +1,7 @@
 from datetime import datetime
-from typing import NamedTuple
 
 from peewee import *
 
-
-MAXIMAL_REC_COUNT = 50
-MAXIMAL_DAYS = 30
 
 DB_NAME = 'StoreBotDB'
 DB_HOST = '127.0.0.1'
@@ -13,23 +9,15 @@ DB_PORT = 5432
 DB_USER = 'postgres'
 DB_PASSWORD = 'masterkey'
 
+BASE_MAXIMAL_REC_COUNT = 5
+LINK_LIFE_DAYS = 30
+SUBSCRIPTION_DAYS_DELAY = 30
 
 ACTIVE_STATUS = True
 DELETED_STATUS = False
-ACCOUNT_TYPES = ['base', 'pro']
+BASE_ACCOUNT = 'base'
+PRO_ACCOUNT = 'pro'
 INFINITY_PRICE = 1e10
-
-
-class Record(NamedTuple):
-    chat_id: int
-    dt: datetime
-    store: str
-    link: str
-    price: str
-
-
-class Orm(NamedTuple):
-    info: object
 
 
 class DBase:
@@ -64,7 +52,7 @@ class DBase:
         class User(BaseModel):
             chat_id = IntegerField(null=False)
             reg_date = DateTimeField(null=False, default=datetime.now())
-            account_type = CharField(null=False, default='base')
+            account_type = CharField(null=False, default=BASE_ACCOUNT)
 
             class Meta:
                 db_table = 'users'
@@ -124,8 +112,14 @@ class DBase:
         table = self.orm.link
         for rec in table.select():
             delta_days = (current_dt - rec.reg_dt).days
-            if delta_days > MAXIMAL_DAYS:
+            if delta_days > LINK_LIFE_DAYS:
                 rec.status = DELETED_STATUS
+                rec.save()
+        table = self.orm.user
+        for rec in table.select().where(table.account_type == PRO_ACCOUNT):
+            delta_days = (current_dt - rec.reg_date).days
+            if delta_days == SUBSCRIPTION_DAYS_DELAY:
+                rec.account_type = BASE_ACCOUNT
                 rec.save()
 
     def get_active_records(self) -> list:
@@ -145,3 +139,16 @@ class DBase:
             record.pre_price = record.current_price
         record.current_price = current_price
         record.save()
+
+    def get_account_type_by_chat_id(self, chat_id: int) -> str:
+        t = self.orm.user
+        record = t.select().where(t.chat_id == chat_id).get()
+        return record.account_type
+
+    def change_account_type_by_chat_id(self, chat_id: int, account_type: str):
+        t = self.orm.user
+        record = t.select().where(t.chat_id == chat_id).get()
+        record.account_type = account_type
+        record.reg_date = datetime.now()
+        record.save()
+
